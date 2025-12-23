@@ -1,0 +1,99 @@
+server:
+  port: 8888
+  tomcat:
+    acceptCount: 1000
+    accesslog:
+      buffered: true
+    maxConnections: 100
+    maxThreads: 500
+spring:
+  jackson:
+    dateFormat: yyyy-MM-dd HH:mm:ss # 对返回的时间格式化
+    timeZone: GMT+8 # 时区设置
+    defaultPropertyInclusion: non_null
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 500MB
+  application:
+    name: template-app
+  profiles:
+    active: local
+  datasource:
+    url: jdbc:h2:file:/Users/guanweiming/IdeaProjects/mqtt-demo/h2/sign;AUTO_SERVER=TRUE;AUTO_RECONNECT=TRUE;MODE=MySQL
+    username: root
+    password: root
+    driverClassName: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+app:
+  app-id: ${appId:1}
+  white-list:
+    - /admin/rbac-user/login
+    - /
+    - /**/*.css
+    - /**/*.js
+    - /**/*.ico
+    - /api/auth/login
+    - /api/auth/register
+logging:
+  level:
+    com.coding: debug
+    com.coding.mapper: info
+    com.coding.mybatis.log: warn
+    com.coding.utils.HttpKit: warn
+  charset:
+    console: UTF-8
+    file: UTF-8
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+mapper:
+  mappers:
+    - tk.mybatis.mapper.common.Mapper
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    use-generated-keys: true
+    use-column-label: true
+  mapper-locations: mapper/*.xml
+tulan:
+  s3:
+    url: https://oss.coding-space.cn
+    access-key: EgOSOYZc29ayZfmcPeC2
+    secret-key: Y1zgO2RINnciTMqdiiKhY2cBLm4B9KDqV82VYn1o
+    bucket: bsdemo
+    access-url: https://bsdemo.oss.coding-space.cn
+    enable: true
+    style: host
+  jwt:
+    enable: true
+  excel:
+    enable: true
+
+# MQTT配置
+mqtt:
+  broker:
+    host: localhost
+    port: 1883
+  client:
+    client-id: spring-boot-mqtt-client
+    username: 
+    password:
+
+# Modbus配置
+modbus:
+  enabled: true           # 是否启用Modbus
+  protocol: TCP           # 协议类型: TCP, RTU, ASCII
+  host: 10.0.0.1          # Modbus主机地址
+  port: 502               # Modbus TCP端口
+  slave-id: 1             # 从站ID
+  timeout: 3000           # 连接超时时间（毫秒）
+  retries: 3              # 重试次数
+  # RTU模式配置（使用RTU协议时需要配置）
+  # serial-port: /dev/ttyUSB0  # 串口名称
+  # baud-rate: 9600            # 波特率
+  # data-bits: 8               # 数据位
+  # stop-bits: 1               # 停止位
+  # parity: NONE               # 校验位: NONE, ODD, EVEN
