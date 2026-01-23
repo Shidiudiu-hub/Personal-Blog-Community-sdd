@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration scan="true" scanPeriod="10 seconds">
+
+    <springProperty name="project" source="spring.application.project"/>
+    <springProperty name="serviceName" source="spring.application.name"/>
+    <springProperty name="env" source="spring.profiles.active"/>
+    <!--logback连接信息-->
+    <springProperty name="logback_host" source="logback.host"/>
+    <springProperty name="logback_port" source="logback.port"/>
+    <springProperty name="logback_virtualHost" source="logback.virtualHost"/>
+    <springProperty name="logback_username" source="logback.username"/>
+    <springProperty name="logback_password" source="logback.password"/>
+    <springProperty name="logback_exchangeName" source="logback.exchangeName"/>
+    <springProperty name="logback_exchangeType" source="logback.exchangeType"/>
+    <springProperty name="logback_routingKeyPattern" source="logback.routingKeyPattern"/>
+
+    <!-- 彩色日志 -->
+    <!-- 彩色日志依赖的渲染类 -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex"
+                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx"
+                    converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
+    <!-- 彩色日志格式 -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(%-20.30logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+    <!-- Console 输出设置 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>debug</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>NEUTRAL</onMismatch>
+        </filter>
+    </appender>
+    <!-- Console 输出设置 -->
+    <appender name="STDOUT_INFO" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
+                <expression>
+                    <!--dev环境输出日志要过滤掉sql日志-->
+                    if(logger.startsWith("com.mybatis.spring.boot.autoconfigure")){
+                        return true;
+                    }
+                    <!--过滤掉Generating unique operation named: getBannerList_1 类似的日志-->
+                    if(logger.startsWith("springfox.documentation.spring.web.readers.operation")){
+                        return true;
+                    }
+                    <!--retrofit 网络请求不在日志中打印-->
+                    if(logger.startsWith("com.github.lianjiatech.retrofit.spring.boot.interceptor.DefaultLoggingInterceptor")){
+                        return true;
+                    }
+                    return false;
+                </expression>
+            </evaluator>
+            <OnMismatch>NEUTRAL</OnMismatch>
+            <OnMatch>DENY</OnMatch>
+        </filter>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>debug</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>NEUTRAL</onMismatch>
+        </filter>
+    </appender>
+
+
+    <!--为了防止进程退出时，内存中的数据丢失，请加上此选项-->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <!-- 0不丢失日志,但是会进入block状态，如果队列日志一直打不出去，会将整个服务打死 -->
+        <!-- 默认的20,如果队列的80%已满,则会丢弃TRACT、DEBUG、INFO级别的日志 -->
+        <discardingThreshold>20</discardingThreshold>
+
+        <!-- 更改默认的队列的深度,该值会影响性能.默认值为256 -->
+        <queueSize>512</queueSize>
+        <!-- 添加附加的appender,最多只能添加一个 -->
+        <!--        <appender-ref ref="kafkaAppender"/>-->
+        <appender-ref ref="STDOUT_INFO"/>
+    </appender>
+
+    <!--项目目录下的日志最低显示debug级别的-->
+    <logger name="com.coding" level="DEBUG" additivity="true"/>
+
+    <root level="info">
+        <springProfile name="uat | prod | suat | sprod">
+            <appender-ref ref="STDOUT_SERVER"/>
+        </springProfile>
+        <springProfile name="dev | test | sdev | stest">
+            <appender-ref ref="STDOUT_INFO"/>
+        </springProfile>
+        <springProfile name="local | slocal">
+            <appender-ref ref="STDOUT"/>
+        </springProfile>
+        <springProfile name="zhongyi">
+            <appender-ref ref="STDOUT"/>
+        </springProfile>
+    </root>
+</Configuration>
