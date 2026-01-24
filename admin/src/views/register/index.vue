@@ -3,11 +3,11 @@
     <div class="login-box">
       <div class="login-left">
         <div class="login-welcome">
-          <h1 class="welcome-title">心理咨询系统</h1>
-          <p class="welcome-subtitle">呵护心灵，健康成长</p>
+          <h1 class="welcome-title">个人博客社区</h1>
+          <p class="welcome-subtitle">分享知识，交流思想</p>
           <div class="welcome-description">
-            <p>为师生提供专业的心理咨询服务</p>
-            <p>营造健康和谐的校园环境</p>
+            <p>发布你的文章，分享你的见解</p>
+            <p>与社区成员互动交流</p>
           </div>
         </div>
       </div>
@@ -36,10 +36,10 @@
             <el-input v-model="registerForm.realName" placeholder="请输入真实姓名" name="realName" type="text" />
           </el-form-item>
 
-          <el-form-item label="角色" prop="role">
-            <el-select v-model="registerForm.role" placeholder="请选择角色" style="width: 100%">
-              <el-option label="普通用户" :value="1" />
-              <el-option label="管理员" :value="2" />
+          <el-form-item label="角色">
+            <el-select v-model="registerForm.role" placeholder="请选择角色（默认普通用户）" style="width: 100%">
+              <el-option label="普通用户" :value="0" />
+              <el-option label="管理员" :value="1" />
             </el-select>
           </el-form-item>
 
@@ -96,7 +96,6 @@ const state = reactive({
       { min: 6, max: 32, message: '密码长度限制6~32', trigger: 'blur' }
     ],
     realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
-    role: [{ required: true, message: '请选择角色', trigger: 'change' }],
     email: [
       { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
     ]
@@ -127,26 +126,28 @@ const handleRegister = async () => {
       state.loading = true
       try {
         const data = {
-          username: state.registerForm.username,
+          username: state.registerForm.username.trim(),
           password: state.registerForm.password,
-          realName: state.registerForm.realName,
-          role: state.registerForm.role
+          realName: state.registerForm.realName.trim()
         }
 
-        if (state.registerForm.phone) {
-          data.phone = state.registerForm.phone
-        }
-        if (state.registerForm.email) {
-          data.email = state.registerForm.email
+        // 角色可选，如果不选则默认为普通用户(0)
+        if (state.registerForm.role !== null && state.registerForm.role !== undefined) {
+          data.role = state.registerForm.role
         }
 
-        const response = await AuthApi.register(data)
-
-        if (response.status !== 0) {
-          ElMessage.error(response.msg || '注册失败')
-          state.loading = false
-          return
+        // 手机号和邮箱：只有非空字符串才发送，避免发送空字符串导致验证失败
+        const phone = state.registerForm.phone?.trim()
+        if (phone) {
+          data.phone = phone
         }
+        const email = state.registerForm.email?.trim()
+        if (email) {
+          data.email = email
+        }
+
+        // 响应拦截器已经处理了status !== 0的情况
+        await AuthApi.register(data)
 
         ElMessage.success('注册成功，请登录')
         state.loading = false

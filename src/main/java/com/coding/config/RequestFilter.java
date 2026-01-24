@@ -45,6 +45,12 @@ public class RequestFilter implements Filter {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         String env = environment.getProperty("spring.profiles.active");
 
+        // 处理CORS预检请求（OPTIONS请求）
+        if ("OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod())) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String uri = httpServletRequest.getRequestURI();
         String token = httpServletRequest.getHeader(TOKEN_HEADER);
         String contentType = request.getContentType();

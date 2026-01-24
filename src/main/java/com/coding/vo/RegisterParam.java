@@ -4,9 +4,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
-import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 /**
  * 注册参数
@@ -34,12 +32,10 @@ public class RegisterParam {
     @ApiModelProperty("手机号")
     private String phone;
 
-    @Email(message = "邮箱格式不正确")
     @ApiModelProperty("邮箱")
     private String email;
 
-    @NotNull(message = "角色不能为空")
-    @ApiModelProperty(value = "角色", required = true)
+    @ApiModelProperty(value = "角色：0-普通用户，1-管理员，默认为0")
     private Integer role;
 }
 

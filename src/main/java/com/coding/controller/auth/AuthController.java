@@ -16,7 +16,6 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -42,6 +41,14 @@ public class AuthController {
     @ApiOperation("用户注册")
     @PostMapping("register")
     public R<String> register(@RequestBody @Valid RegisterParam param) {
+        // 验证邮箱格式（如果提供了邮箱）
+        if (param.getEmail() != null && !param.getEmail().trim().isEmpty()) {
+            String emailPattern = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+            if (!param.getEmail().matches(emailPattern)) {
+                return R.createByErrorMessage("邮箱格式不正确");
+            }
+        }
+
         // 检查用户名是否已存在
         User existUser = userMapper.selectOne(new User().setUsername(param.getUsername()));
         if (existUser != null) {
@@ -55,10 +62,14 @@ public class AuthController {
         user.setCreateTime(LocalDateTime.now());
         user.setDeleted(0);
         user.setStatus(1);
+        user.setFollowCount(0);
+        user.setFanCount(0);
+        // 如果没有指定角色，默认为普通用户
+        if (user.getRole() == null) {
+            user.setRole(0);
+        }
 
-        R<String> result = userService.add(user);
-        // 如果添加成功，返回成功信息
-        return R.createBySuccess("注册成功");
+        return userService.add(user);
     }
 
     @ApiOperation("用户登录")

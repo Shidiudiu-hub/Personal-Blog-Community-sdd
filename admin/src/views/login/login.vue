@@ -3,11 +3,11 @@
     <div class="login-box">
       <div class="login-left">
         <div class="login-welcome">
-          <h1 class="welcome-title">心理咨询系统</h1>
-          <p class="welcome-subtitle">呵护心灵，健康成长</p>
+          <h1 class="welcome-title">个人博客社区</h1>
+          <p class="welcome-subtitle">分享知识，交流思想</p>
           <div class="welcome-description">
-            <p>为师生提供专业的心理咨询服务</p>
-            <p>营造健康和谐的校园环境</p>
+            <p>发布你的文章，分享你的见解</p>
+            <p>与社区成员互动交流</p>
           </div>
         </div>
       </div>
@@ -109,16 +109,17 @@ const handleLogin = async () => {
           password: state.loginForm.password
         })
 
-        if (response.status !== 0) {
-          ElMessage.error(response.msg || '登录失败')
+        // 响应拦截器已经处理了status !== 0的情况，这里直接使用data
+        const userStore = useUserStore()
+        const loginData = response.data
+        const token = loginData?.token
+        const userInfo = loginData?.userInfo
+
+        if (!token) {
+          ElMessage.error('登录失败：未获取到token')
           state.loading = false
           return
         }
-
-        // 登录成功，保存token和用户信息
-        const userStore = useUserStore()
-        const token = response.data.token
-        const userInfo = response.data.userInfo
 
         userStore.setToken({ token })
         if (userInfo) {

@@ -91,15 +91,29 @@ public class User implements Serializable {
     private String avatar;
 
     /**
-    * 状态：1-正常，0-禁用
-    */
+     * 状态：1-正常，0-禁用
+     */
     @Column(name = "status")
     @ApiModelProperty(value = "状态：1-正常，0-禁用")
     private Integer status;
 
     /**
-    * 创建时间
-    */
+     * 关注数
+     */
+    @Column(name = "follow_count")
+    @ApiModelProperty(value = "关注数")
+    private Integer followCount;
+
+    /**
+     * 粉丝数
+     */
+    @Column(name = "fan_count")
+    @ApiModelProperty(value = "粉丝数")
+    private Integer fanCount;
+
+    /**
+     * 创建时间
+     */
     @Column(name = "create_time")
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;

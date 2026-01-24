@@ -35,5 +35,11 @@ public class UserVO {
 
     @ApiModelProperty("状态：1-正常，0-禁用")
     private Integer status;
+
+    @ApiModelProperty("关注数")
+    private Integer followCount;
+
+    @ApiModelProperty("粉丝数")
+    private Integer fanCount;
 }
 

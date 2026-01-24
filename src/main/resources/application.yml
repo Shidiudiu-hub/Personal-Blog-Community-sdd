@@ -37,6 +37,7 @@ app:
     - /**/*.ico
     - /api/auth/login
     - /api/auth/register
+    - /api/auth/check-username
 logging:
   level:
     com.coding: debug
