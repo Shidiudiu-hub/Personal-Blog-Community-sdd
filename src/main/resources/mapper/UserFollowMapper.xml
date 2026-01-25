@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.coding.mapper.UserFollowMapper">
+
+    <resultMap id="UserSimpleVOMap" type="com.coding.vo.UserSimpleVO">
+        <id property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="avatar" column="avatar"/>
+        <result property="followCount" column="follow_count"/>
+        <result property="fanCount" column="fan_count"/>
+        <result property="followTime" column="follow_time"/>
+    </resultMap>
+
+    <select id="selectByFollowerAndFollowing" resultType="com.coding.entity.UserFollow">
+        SELECT id, follower_id, following_id, create_time
+        FROM user_follow
+        WHERE follower_id = #{followerId} AND following_id = #{followingId}
+    </select>
+
+    <delete id="deleteByFollowerAndFollowing">
+        DELETE FROM user_follow WHERE follower_id = #{followerId} AND following_id = #{followingId}
+    </delete>
+
+    <select id="selectFollowingList" resultMap="UserSimpleVOMap">
+        SELECT u.user_id, u.username, u.avatar, u.follow_count, u.fan_count,
+               uf.create_time AS follow_time
+        FROM user_follow uf
+        JOIN user u ON uf.following_id = u.user_id
+        WHERE uf.follower_id = #{userId} AND u.deleted = 0
+        ORDER BY uf.create_time DESC
+    </select>
+
+    <select id="selectFollowerList" resultMap="UserSimpleVOMap">
+        SELECT u.user_id, u.username, u.avatar, u.follow_count, u.fan_count,
+               uf.create_time AS follow_time
+        FROM user_follow uf
+        JOIN user u ON uf.follower_id = u.user_id
+        WHERE uf.following_id = #{userId} AND u.deleted = 0
+        ORDER BY uf.create_time DESC
+    </select>
+
+    <select id="selectFollowingIdsByFollowerId" resultType="java.lang.Long">
+        SELECT following_id FROM user_follow
+        WHERE follower_id = #{followerId}
+        <if test="followingIds != null and followingIds.size() > 0">
+            AND following_id IN
+            <foreach collection="followingIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+</mapper>

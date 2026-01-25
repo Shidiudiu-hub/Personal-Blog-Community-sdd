@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.coding.mapper.TagMapper">
+
+    <select id="selectHotTags" resultType="com.coding.entity.Tag">
+        SELECT tag_id, name, color, article_count, create_time, update_time, deleted
+        FROM tag
+        WHERE deleted = 0
+        ORDER BY article_count DESC
+        LIMIT 10
+    </select>
+</mapper>

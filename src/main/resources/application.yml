@@ -38,6 +38,22 @@ app:
     - /api/auth/login
     - /api/auth/register
     - /api/auth/check-username
+    - /api/article/list
+    - /api/article/detail
+    - /api/article/search
+    - /api/article/like-status
+    - /api/article/collect-status
+    - /api/category/list
+    - /api/tag/list
+    - /api/tag/hot
+    - /api/comment/list
+    - /api/comment/replies
+    - /api/comment/count
+    - /api/user/info
+    - /api/user/follow-status
+    - /api/user/following-list
+    - /api/user/follower-list
+    - /api/article/test
 logging:
   level:
     com.coding: debug

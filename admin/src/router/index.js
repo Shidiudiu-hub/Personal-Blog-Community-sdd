@@ -77,9 +77,74 @@ export const constantRoutes = [
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
         meta: {
-          title: '系统首页',
+          title: '首页',
           icon: 'dashboard'
         }
+      },
+      {
+        path: 'article/publish',
+        name: 'ArticlePublish',
+        component: () => import('@/views/article/publish.vue'),
+        meta: {
+          title: '发布文章',
+          icon: 'edit'
+        }
+      },
+      {
+        path: 'article/my',
+        name: 'ArticleMy',
+        component: () => import('@/views/article/my.vue'),
+        meta: {
+          title: '我的文章',
+          icon: 'list'
+        }
+      },
+      {
+        path: 'article/:id',
+        name: 'ArticleDetail',
+        component: () => import('@/views/article/detail.vue'),
+        meta: {
+          title: '文章详情',
+          icon: 'documentation'
+        },
+        hidden: true
+      },
+      {
+        path: 'user/likes',
+        name: 'UserLikes',
+        component: () => import('@/views/user/likes.vue'),
+        meta: {
+          title: '我的点赞',
+          icon: 'star'
+        }
+      },
+      {
+        path: 'user/collects',
+        name: 'UserCollects',
+        component: () => import('@/views/user/collects.vue'),
+        meta: {
+          title: '我的收藏',
+          icon: 'collection'
+        }
+      },
+      {
+        path: 'user/settings',
+        name: 'UserSettings',
+        component: () => import('@/views/user/settings.vue'),
+        meta: {
+          title: '个人设置',
+          icon: 'setting'
+        }
+      },
+      {
+        path: 'user/:id',
+        name: 'UserProfile',
+        component: () => import('@/views/user/profile.vue'),
+        meta: {
+          title: '用户主页',
+          icon: 'user'
+        },
+        hidden: true
       }
     ]
   },

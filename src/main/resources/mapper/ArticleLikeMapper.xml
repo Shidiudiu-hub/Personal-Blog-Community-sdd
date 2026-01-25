@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.coding.mapper.ArticleLikeMapper">
+
+    <resultMap id="ArticleListItemVOMap" type="com.coding.vo.ArticleListItemVO">
+        <id property="articleId" column="article_id"/>
+        <result property="title" column="title"/>
+        <result property="summary" column="summary"/>
+        <result property="coverImage" column="cover_image"/>
+        <result property="authorUserId" column="author_user_id"/>
+        <result property="authorName" column="author_name"/>
+        <result property="authorAvatar" column="author_avatar"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="viewCount" column="view_count"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="collectCount" column="collect_count"/>
+        <result property="commentCount" column="comment_count"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectByArticleIdAndUserId" resultType="com.coding.entity.ArticleLike">
+        SELECT id, article_id, user_id, create_time
+        FROM article_like
+        WHERE article_id = #{articleId} AND user_id = #{userId}
+    </select>
+
+    <delete id="deleteByArticleIdAndUserId">
+        DELETE FROM article_like WHERE article_id = #{articleId} AND user_id = #{userId}
+    </delete>
+
+    <select id="selectLikedArticlesByUserId" resultMap="ArticleListItemVOMap">
+        SELECT a.article_id, a.title, a.summary, a.cover_image, a.category_id,
+               a.view_count, a.like_count, a.collect_count, a.comment_count, a.create_time,
+               u.user_id AS author_user_id, u.username AS author_name, u.avatar AS author_avatar,
+               c.name AS category_name
+        FROM article_like al
+        JOIN article a ON al.article_id = a.article_id
+        LEFT JOIN user u ON a.user_id = u.user_id
+        LEFT JOIN category c ON a.category_id = c.category_id
+        WHERE al.user_id = #{userId} AND a.deleted = 0 AND a.status = 1
+        ORDER BY al.create_time DESC
+    </select>
+</mapper>

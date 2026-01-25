@@ -3,7 +3,7 @@ export default {
    * 全局
    */
   // 页面标题
-  title: '心里咨询系统',
+  title: '个人博客社区',
   // 布局方式 Classic 经典布局 Default 默认布局 Streamline 精简布局
   layoutMode: 'Classic',
   // 默认全局尺寸, 可选值 large / default /small

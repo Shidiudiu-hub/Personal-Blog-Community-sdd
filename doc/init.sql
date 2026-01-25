@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS `comment` (
     `article_id` BIGINT NOT NULL COMMENT '文章ID',
     `user_id` BIGINT NOT NULL COMMENT '评论用户ID',
     `parent_id` BIGINT DEFAULT 0 COMMENT '父评论ID（0表示顶级评论）',
+    `reply_user_id` BIGINT DEFAULT NULL COMMENT '被回复用户ID',
     `content` TEXT NOT NULL COMMENT '评论内容',
     `like_count` INT DEFAULT 0 COMMENT '点赞数',
     `reply_count` INT DEFAULT 0 COMMENT '回复数',

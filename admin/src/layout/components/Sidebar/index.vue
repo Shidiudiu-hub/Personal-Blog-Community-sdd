@@ -3,7 +3,7 @@
     <el-scrollbar class="vertical-menus-scrollbar">
       <div class="sidebar-logo">
         <svg-icon name="dashboard" class="logo-icon" />
-        <span class="logo-text">心里咨询系统</span>
+        <span class="logo-text">个人博客社区</span>
       </div>
       <el-menu mode="vertical" :default-active="activeMenu" :collapse="menuCollapse"
         :background-color="menuBackgroundColor" :text-color="menuTextColor" :active-text-color="menuActiveTextColor"

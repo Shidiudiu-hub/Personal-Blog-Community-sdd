@@ -69,8 +69,12 @@ public class RequestFilter implements Filter {
                 boolean writeUserInfo = writeUserInfo(httpServletRequestWrapper, token);
                 if (!writeUserInfo) {
                     log.trace("env : {} , uri : {} ,接口在白名单里,上传了token,但是token无效,继续放行", env, uri);
+                    chain.doFilter(httpServletRequest, response);
+                } else {
+                    // 如果成功写入用户信息，使用 wrapper 传递
+                    log.trace("env : {} , uri : {} ,接口在白名单里,已写入用户信息,使用wrapper", env, uri);
+                    chain.doFilter(httpServletRequestWrapper, response);
                 }
-                chain.doFilter(httpServletRequest, response);
             } else {
                 // 如果没有token,直接放行
                 chain.doFilter(httpServletRequest, response);

@@ -13,6 +13,8 @@ request.interceptors.request.use(
   config => {
     // do something before request is sent
     const userStore = useUserStore()
+    console.log('[Request]', config.method?.toUpperCase(), config.url)
+    console.log('[Request] Token存在:', !!userStore.token)
     if (userStore.token) {
       // let each request carry token
       // ['X-Token'] is a custom headers key
@@ -31,10 +33,17 @@ request.interceptors.request.use(
 // response interceptor
 request.interceptors.response.use(
   response => {
-    // console.log('🚀 ~ file: request.js:37 ~ response:', response.data)
     const resData = response.data
-    // if the custom status is not 20000, it is judged as an error.
+    console.log('[Response]', response.config.url, '原始响应:', resData)
+    
+    // 如果没有 status 字段，可能是直接返回的数据（旧格式），直接返回
+    if (resData.status === undefined || resData.status === null) {
+      console.log('[Response] 无status字段，直接返回:', resData)
+      return resData
+    }
+    // if the custom status is not 0, it is judged as an error.
     if (resData.status !== 0) {
+      console.log('[Response] status !== 0, 错误:', resData.status, resData.msg)
       ElMessage({
         message: resData.msg || 'Error',
         type: 'error',
@@ -59,16 +68,22 @@ request.interceptors.response.use(
           })
         })
       } else if (resData.status === 10) {
+        // status 10 表示需要登录，但不显示错误消息（已在后端处理）
+        return Promise.reject(new Error(resData.msg || '需要登录'))
       } else {
         return Promise.reject(new Error(resData.msg || 'Error'))
       }
     } else {
+      console.log('[Response] status === 0, 返回 resData:', resData)
+      console.log('[Response] resData.data:', resData.data)
       return resData
     }
   },
   error => {
+    // 网络错误或其他错误
+    const errorMessage = error.response?.data?.msg || error.message || '网络错误'
     ElMessage({
-      message: error.message,
+      message: errorMessage,
       type: 'error',
       duration: 5 * 1000
     })

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.coding.mapper.CommentMapper">
+
+    <resultMap id="CommentVOMap" type="com.coding.vo.CommentVO">
+        <id property="commentId" column="comment_id"/>
+        <result property="articleId" column="article_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="avatar" column="avatar"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="replyUserId" column="reply_user_id"/>
+        <result property="replyUsername" column="reply_username"/>
+        <result property="content" column="content"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="replyCount" column="reply_count"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectTopCommentsByArticleId" resultMap="CommentVOMap">
+        SELECT c.comment_id, c.article_id, c.user_id, c.parent_id, c.reply_user_id,
+               c.content, c.like_count, c.reply_count, c.create_time,
+               u.username, u.avatar
+        FROM comment c
+        LEFT JOIN user u ON c.user_id = u.user_id
+        WHERE c.article_id = #{articleId} AND c.parent_id = 0 AND c.deleted = 0
+        ORDER BY c.create_time DESC
+    </select>
+
+    <select id="selectRepliesByParentId" resultMap="CommentVOMap">
+        SELECT c.comment_id, c.article_id, c.user_id, c.parent_id, c.reply_user_id,
+               c.content, c.like_count, c.reply_count, c.create_time,
+               u.username, u.avatar,
+               ru.username AS reply_username
+        FROM comment c
+        LEFT JOIN user u ON c.user_id = u.user_id
+        LEFT JOIN user ru ON c.reply_user_id = ru.user_id
+        WHERE c.parent_id = #{parentId} AND c.deleted = 0
+        ORDER BY c.create_time ASC
+    </select>
+
+    <update id="updateReplyCount">
+        UPDATE comment SET reply_count = reply_count + #{delta} WHERE comment_id = #{commentId}
+    </update>
+
+    <update id="updateLikeCount">
+        UPDATE comment SET like_count = like_count + #{delta} WHERE comment_id = #{commentId}
+    </update>
+</mapper>

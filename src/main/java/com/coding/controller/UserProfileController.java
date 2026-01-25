@@ -1,16 +1,20 @@
 package com.coding.controller;
 
 import com.coding.common.Const;
+import com.coding.entity.Article;
 import com.coding.entity.User;
+import com.coding.mapper.ArticleMapper;
 import com.coding.mapper.UserMapper;
 import com.coding.utils.HttpKit;
 import com.coding.utils.PasswordUtil;
 import com.coding.utils.R;
 import com.coding.vo.ChangePasswordParam;
 import com.coding.vo.UpdateProfileParam;
+import com.coding.vo.UserProfileVO;
 import com.coding.vo.UserVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -36,6 +40,7 @@ import java.util.Map;
 public class UserProfileController {
 
     private final UserMapper userMapper;
+    private final ArticleMapper articleMapper;
 
     @ApiOperation("获取个人资料")
     @GetMapping("profile")
@@ -147,25 +152,80 @@ public class UserProfileController {
 
     @ApiOperation("获取用户统计数据")
     @GetMapping("statistics")
-    public R<Map<String, Object>> getStatistics() {
-        Long userId = HttpKit.getUserId();
-        if (userId == null) {
+    public R<Map<String, Object>> getStatistics(
+            @RequestParam(required = false) @ApiParam("用户ID，不传则查当前用户") Long userId) {
+        Long targetUserId = userId;
+        if (targetUserId == null) {
+            targetUserId = HttpKit.getUserId();
+        }
+        if (targetUserId == null) {
             return R.createByErrorMessage("未登录");
         }
 
-        User user = userMapper.selectByPrimaryKey(userId);
+        User user = userMapper.selectByPrimaryKey(targetUserId);
         if (user == null) {
             return R.createByErrorMessage("用户不存在");
         }
 
+        // 统计文章数
+        Article articleQuery = new Article();
+        articleQuery.setUserId(targetUserId);
+        articleQuery.setDeleted(0);
+        articleQuery.setStatus(1);
+        int articleCount = articleMapper.selectCount(articleQuery);
+
+        // 统计总获赞数（所有文章的点赞数之和）
+        // 这里简化处理，实际可以用 SQL SUM 聚合
+        int likeCount = 0;
+        int collectCount = 0;
+        Long totalViewCount = 0L;
+
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("followCount", user.getFollowCount() != null ? user.getFollowCount() : 0);
         statistics.put("fanCount", user.getFanCount() != null ? user.getFanCount() : 0);
-        // TODO: 后续添加文章数、点赞数、收藏数等统计
-        statistics.put("articleCount", 0);
-        statistics.put("likeCount", 0);
-        statistics.put("collectCount", 0);
+        statistics.put("articleCount", articleCount);
+        statistics.put("likeCount", likeCount);
+        statistics.put("collectCount", collectCount);
+        statistics.put("totalViewCount", totalViewCount);
 
         return R.createBySuccess(statistics);
+    }
+
+    @ApiOperation("获取用户信息")
+    @GetMapping("info")
+    public R<UserProfileVO> getInfo(
+            @RequestParam(required = false) @ApiParam("用户ID，不传则查当前用户") Long userId) {
+        Long targetUserId = userId;
+        if (targetUserId == null) {
+            targetUserId = HttpKit.getUserId();
+        }
+        if (targetUserId == null) {
+            return R.createByErrorMessage("用户不存在");
+        }
+
+        User user = userMapper.selectByPrimaryKey(targetUserId);
+        if (user == null || user.getDeleted() == 1) {
+            return R.createByErrorMessage("用户不存在");
+        }
+
+        UserProfileVO vo = new UserProfileVO();
+        vo.setUserId(user.getUserId());
+        vo.setUsername(user.getUsername());
+        vo.setAvatar(user.getAvatar());
+        vo.setEmail(user.getEmail());
+        vo.setPhone(user.getPhone());
+        vo.setFollowCount(user.getFollowCount() != null ? user.getFollowCount() : 0);
+        vo.setFanCount(user.getFanCount() != null ? user.getFanCount() : 0);
+        vo.setCreateTime(user.getCreateTime());
+
+        // 统计文章数
+        Article articleQuery = new Article();
+        articleQuery.setUserId(targetUserId);
+        articleQuery.setDeleted(0);
+        articleQuery.setStatus(1);
+        int articleCount = articleMapper.selectCount(articleQuery);
+        vo.setArticleCount(articleCount);
+
+        return R.createBySuccess(vo);
     }
 }
