@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.coding.mapper.CategoryMapper">
+
+    <!-- 更新分类的文章数（仅统计已发布且未删除的文章） -->
+    <update id="updateArticleCount">
+        UPDATE `category` c
+        SET `article_count` = (
+            SELECT COUNT(*)
+            FROM `article` a
+            WHERE a.category_id = #{categoryId}
+            AND a.status = 1
+            AND a.deleted = 0
+        )
+        WHERE c.category_id = #{categoryId}
+    </update>
+
+</mapper>

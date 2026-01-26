@@ -5,4 +5,11 @@
     <delete id="deleteByArticleId">
         DELETE FROM article_tag WHERE article_id = #{articleId}
     </delete>
+
+    <select id="selectByArticleId" resultType="com.coding.entity.ArticleTag">
+        SELECT id, article_id, tag_id, create_time
+        FROM article_tag
+        WHERE article_id = #{articleId}
+    </select>
+
 </mapper>

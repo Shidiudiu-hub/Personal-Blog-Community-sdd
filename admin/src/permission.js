@@ -111,6 +111,23 @@ router.beforeEach(async (to, from, next) => {
           }
         }
 
+        // 检查路由权限（针对 constantRoutes 中的路由）
+        if (to.meta && to.meta.roles && to.meta.roles.length > 0) {
+          if (!userStore.userInfo) {
+            ElMessage.error('请先登录')
+            next('/login')
+            NProgress.done()
+            return
+          }
+          const userRole = userStore.userInfo.role
+          if (!to.meta.roles.includes(userRole)) {
+            ElMessage.error('无权限访问')
+            next('/dashboard')
+            NProgress.done()
+            return
+          }
+        }
+
         // 路由存在且不是404路由，直接通过
         // 如果路由是新添加的，使用replace方式重新导航以确保路由正确激活
         // 这样可以避免刷新时404路由优先级问题

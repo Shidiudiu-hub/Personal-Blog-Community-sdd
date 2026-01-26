@@ -56,10 +56,12 @@ app:
     - /api/article/test
 logging:
   level:
-    com.coding: debug
+    com.coding: info
     com.coding.mapper: info
     com.coding.mybatis.log: warn
-    com.coding.utils.HttpKit: warn
+    com.coding.utils.HttpKit: info
+    com.coding.config.RequestFilter: info
+    com.coding.service.impl.ArticleServiceImpl: info
   charset:
     console: UTF-8
     file: UTF-8

@@ -4,6 +4,8 @@ import com.coding.entity.Article;
 import com.coding.entity.ArticleTag;
 import com.coding.mapper.ArticleMapper;
 import com.coding.mapper.ArticleTagMapper;
+import com.coding.mapper.CategoryMapper;
+import com.coding.mapper.TagMapper;
 import com.coding.service.IArticleService;
 import com.coding.utils.PageResult;
 import com.coding.utils.R;
@@ -36,6 +38,8 @@ public class ArticleServiceImpl implements IArticleService {
 
     private final ArticleMapper articleMapper;
     private final ArticleTagMapper articleTagMapper;
+    private final CategoryMapper categoryMapper;
+    private final TagMapper tagMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -75,6 +79,19 @@ public class ArticleServiceImpl implements IArticleService {
                 articleTagMapper.insertSelective(at);
             }
         }
+        
+        // 更新分类和标签的文章数（仅当文章已发布时）
+        if (article.getStatus() != null && article.getStatus() == 1) {
+            if (article.getCategoryId() != null) {
+                categoryMapper.updateArticleCount(article.getCategoryId());
+            }
+            if (param.getTagIds() != null && !param.getTagIds().isEmpty()) {
+                for (Long tagId : param.getTagIds()) {
+                    tagMapper.updateArticleCount(tagId);
+                }
+            }
+        }
+        
         return R.createBySuccess(articleId);
     }
 
@@ -104,6 +121,14 @@ public class ArticleServiceImpl implements IArticleService {
             return R.createBySuccess();
         }
 
+        // 记录旧的分类ID和标签ID，用于更新文章数
+        Long oldCategoryId = exist.getCategoryId();
+        List<ArticleTag> oldTags = articleTagMapper.selectByArticleId(param.getArticleId());
+        List<Long> oldTagIds = oldTags != null ? oldTags.stream()
+                .map(ArticleTag::getTagId)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList()) : new ArrayList<>();
+        
         articleTagMapper.deleteByArticleId(param.getArticleId());
         if (param.getTagIds() != null && !param.getTagIds().isEmpty()) {
             LocalDateTime now = LocalDateTime.now();
@@ -115,10 +140,52 @@ public class ArticleServiceImpl implements IArticleService {
                 articleTagMapper.insertSelective(at);
             }
         }
+        
+        // 更新分类和标签的文章数
+        // 获取更新后的文章状态
+        Article updatedArticle = articleMapper.selectByPrimaryKey(param.getArticleId());
+        Integer newStatus = updatedArticle != null ? updatedArticle.getStatus() : exist.getStatus();
+        Long newCategoryId = param.getCategoryId() != null ? param.getCategoryId() : exist.getCategoryId();
+        List<Long> newTagIds = param.getTagIds() != null ? param.getTagIds() : oldTagIds;
+        
+        // 如果文章已发布，更新相关分类和标签的文章数
+        if (newStatus != null && newStatus == 1) {
+            // 更新旧分类的文章数（如果分类改变了）
+            if (oldCategoryId != null && !oldCategoryId.equals(newCategoryId)) {
+                categoryMapper.updateArticleCount(oldCategoryId);
+            }
+            // 更新新分类的文章数
+            if (newCategoryId != null) {
+                categoryMapper.updateArticleCount(newCategoryId);
+            }
+            
+            // 更新旧标签的文章数（如果标签改变了）
+            for (Long oldTagId : oldTagIds) {
+                if (!newTagIds.contains(oldTagId)) {
+                    tagMapper.updateArticleCount(oldTagId);
+                }
+            }
+            // 更新新标签的文章数
+            for (Long newTagId : newTagIds) {
+                tagMapper.updateArticleCount(newTagId);
+            }
+        } else {
+            // 如果文章不是已发布状态，也需要更新旧分类和标签的文章数（因为可能从已发布变为草稿）
+            if (exist.getStatus() != null && exist.getStatus() == 1) {
+                if (oldCategoryId != null) {
+                    categoryMapper.updateArticleCount(oldCategoryId);
+                }
+                for (Long oldTagId : oldTagIds) {
+                    tagMapper.updateArticleCount(oldTagId);
+                }
+            }
+        }
+        
         return R.createBySuccess();
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public R<String> delete(Long articleId, Long userId) {
         Article exist = articleMapper.selectByPrimaryKey(articleId);
         if (exist == null) {
@@ -127,6 +194,15 @@ public class ArticleServiceImpl implements IArticleService {
         if (!exist.getUserId().equals(userId)) {
             return R.createByErrorMessage("无权限删除");
         }
+        
+        // 记录删除前的分类ID和标签ID，用于更新文章数
+        Long categoryId = exist.getCategoryId();
+        List<ArticleTag> tags = articleTagMapper.selectByArticleId(articleId);
+        List<Long> tagIds = tags != null ? tags.stream()
+                .map(ArticleTag::getTagId)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList()) : new ArrayList<>();
+        
         Article u = new Article();
         u.setArticleId(articleId);
         u.setDeleted(1);
@@ -135,6 +211,17 @@ public class ArticleServiceImpl implements IArticleService {
         if (cnt == 0) {
             return R.createByErrorMessage("删除失败");
         }
+        
+        // 如果文章是已发布状态，更新分类和标签的文章数
+        if (exist.getStatus() != null && exist.getStatus() == 1) {
+            if (categoryId != null) {
+                categoryMapper.updateArticleCount(categoryId);
+            }
+            for (Long tagId : tagIds) {
+                tagMapper.updateArticleCount(tagId);
+            }
+        }
+        
         return R.createBySuccess();
     }
 
@@ -152,11 +239,18 @@ public class ArticleServiceImpl implements IArticleService {
             return R.createByErrorMessage("文章已删除");
         }
         
-        log.info("文章信息 - articleId: {}, userId: {}, status: {}, deleted: {}", 
-                articleId, article.getUserId(), article.getStatus(), article.getDeleted());
+        log.info("文章信息 - articleId: {}, userId: {}, status: {} (类型: {}), deleted: {}", 
+                articleId, article.getUserId(), article.getStatus(), 
+                article.getStatus() != null ? article.getStatus().getClass().getName() : "null",
+                article.getDeleted());
         
         // 检查草稿权限：草稿只能作者查看
-        if (article.getStatus() != null && article.getStatus() == 0) {
+        // 兼容 Integer 和 int 类型
+        Integer status = article.getStatus();
+        boolean isDraft = status != null && (status == 0 || status.equals(0));
+        log.info("草稿判断 - status: {}, isDraft: {}", status, isDraft);
+        
+        if (isDraft) {
             // 草稿状态
             log.info("检测到草稿 - articleId: {}, articleUserId: {}, currentUserId: {}", 
                     articleId, article.getUserId(), currentUserId);

@@ -9,4 +9,20 @@
         ORDER BY article_count DESC
         LIMIT 10
     </select>
+
+    <!-- 更新标签的文章数（仅统计已发布且未删除的文章） -->
+    <update id="updateArticleCount">
+        UPDATE `tag` t
+        SET `article_count` = (
+            SELECT COUNT(DISTINCT at.article_id)
+            FROM `article_tag` at
+            INNER JOIN `article` a ON at.article_id = a.article_id
+            WHERE at.tag_id = #{tagId}
+            AND a.status = 1
+            AND a.deleted = 0
+        )
+        WHERE t.tag_id = #{tagId}
+    </update>
+
 </mapper>
+

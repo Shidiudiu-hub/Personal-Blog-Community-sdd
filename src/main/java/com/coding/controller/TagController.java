@@ -2,6 +2,8 @@ package com.coding.controller;
 
 import com.coding.common.Const;
 import com.coding.entity.Tag;
+import com.coding.entity.User;
+import com.coding.mapper.UserMapper;
 import com.coding.service.ITagService;
 import com.coding.utils.HttpKit;
 import com.coding.utils.R;
@@ -28,6 +30,7 @@ import java.util.List;
 public class TagController {
 
     private final ITagService tagService;
+    private final UserMapper userMapper;
 
     @ApiOperation("标签列表")
     @GetMapping("list")
@@ -44,8 +47,13 @@ public class TagController {
     @ApiOperation("新增标签")
     @PostMapping("add")
     public R<String> add(@RequestBody Tag tag) {
-        if (HttpKit.getUserId() == null) {
+        Long userId = HttpKit.getUserId();
+        if (userId == null) {
             return R.createByNeedLogin();
+        }
+        // 检查是否是管理员
+        if (!isAdmin(userId)) {
+            return R.createByErrorMessage("无权限操作，需要管理员权限");
         }
         return tagService.add(tag);
     }
@@ -53,8 +61,13 @@ public class TagController {
     @ApiOperation("更新标签")
     @PostMapping("update")
     public R<String> update(@RequestBody Tag tag) {
-        if (HttpKit.getUserId() == null) {
+        Long userId = HttpKit.getUserId();
+        if (userId == null) {
             return R.createByNeedLogin();
+        }
+        // 检查是否是管理员
+        if (!isAdmin(userId)) {
+            return R.createByErrorMessage("无权限操作，需要管理员权限");
         }
         return tagService.update(tag);
     }
@@ -62,9 +75,27 @@ public class TagController {
     @ApiOperation("删除标签")
     @PostMapping("delete")
     public R<String> delete(@RequestParam @ApiParam(value = "标签ID", required = true) Long tagId) {
-        if (HttpKit.getUserId() == null) {
+        Long userId = HttpKit.getUserId();
+        if (userId == null) {
             return R.createByNeedLogin();
         }
+        // 检查是否是管理员
+        if (!isAdmin(userId)) {
+            return R.createByErrorMessage("无权限操作，需要管理员权限");
+        }
         return tagService.delete(tagId);
+    }
+
+    /**
+     * 检查用户是否是管理员
+     */
+    private boolean isAdmin(Long userId) {
+        try {
+            User user = userMapper.selectByPrimaryKey(userId);
+            return user != null && user.getRole() != null && user.getRole() == 1;
+        } catch (Exception e) {
+            log.warn("检查管理员权限失败 - userId: {}", userId, e);
+            return false;
+        }
     }
 }

@@ -145,6 +145,26 @@ export const constantRoutes = [
           icon: 'user'
         },
         hidden: true
+      },
+      {
+        path: 'admin/category',
+        name: 'AdminCategory',
+        component: () => import('@/views/admin/category.vue'),
+        meta: {
+          title: '分类管理',
+          icon: 'list',
+          roles: [1] // 仅管理员可访问
+        }
+      },
+      {
+        path: 'admin/tag',
+        name: 'AdminTag',
+        component: () => import('@/views/admin/tag.vue'),
+        meta: {
+          title: '标签管理',
+          icon: 'price-tag',
+          roles: [1] // 仅管理员可访问
+        }
       }
     ]
   },

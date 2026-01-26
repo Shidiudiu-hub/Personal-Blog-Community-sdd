@@ -62,23 +62,26 @@ public class RequestFilter implements Filter {
         HeaderRequestWrapper httpServletRequestWrapper = new HeaderRequestWrapper(httpServletRequest);
         log.trace("local env : {} , uri : {} ,token : {}", env, uri, token);
 
-        if (checkInWhiteList(appProperties.getWhiteList(), uri)) {
+        boolean inWhiteList = checkInWhiteList(appProperties.getWhiteList(), uri);
+        log.info("请求过滤 - uri: {}, inWhiteList: {}, hasToken: {}", uri, inWhiteList, StringUtils.isNotBlank(token));
+        
+        if (inWhiteList) {
             // 如果接口在白名单里
             if (isTokenValid(token)) {
                 // 如果有token,将用户信息写入上下文
                 boolean writeUserInfo = writeUserInfo(httpServletRequestWrapper, token);
                 if (!writeUserInfo) {
-                    log.trace("env : {} , uri : {} ,接口在白名单里,上传了token,但是token无效,继续放行", env, uri);
+                    log.info("env : {} , uri : {} ,接口在白名单里,上传了token,但是token无效,继续放行", env, uri);
                     chain.doFilter(httpServletRequest, response);
                 } else {
                     // 如果成功写入用户信息，使用 wrapper 传递
-                    log.trace("env : {} , uri : {} ,接口在白名单里,已写入用户信息,使用wrapper", env, uri);
+                    log.info("env : {} , uri : {} ,接口在白名单里,已写入用户信息,使用wrapper", env, uri);
                     chain.doFilter(httpServletRequestWrapper, response);
                 }
             } else {
                 // 如果没有token,直接放行
+                log.info("env : {} , uri : {} ,接口在白名单里,无token,直接放行", env, uri);
                 chain.doFilter(httpServletRequest, response);
-                log.trace("env : {} , uri : {} ,接口在白名单里,跳过授权认定", env, uri);
             }
         } else {
             // 如果接口不再白名单里,
@@ -113,18 +116,17 @@ public class RequestFilter implements Filter {
         try {
             String userId = jwtService.getSub(token);
             Map<String, Object> claims = jwtService.getClaims(token);
-            log.info("claims:{}", claims);
-            if ("system".equals(claims.get("iss"))) {
+            log.info("写入用户信息 - userId: {}, claims: {}", userId, claims);
+            if (userId != null && !userId.isEmpty()) {
                 httpServletRequestWrapper.addHeader("userId", userId);
+                log.info("成功写入用户ID到请求头 - userId: {}", userId);
                 return true;
             } else {
-                httpServletRequestWrapper.addHeader("userId", userId);
-                return true;
+                log.warn("userId为空，无法写入请求头");
+                return false;
             }
-
         } catch (Exception e) {
-            log.info("传了token但是token错误,提示需要重新登录", e);
-            String env = environment.getProperty("spring.profiles.active");
+            log.warn("传了token但是token错误,提示需要重新登录", e);
             return false;
         }
     }
@@ -149,16 +151,21 @@ public class RequestFilter implements Filter {
 
     private boolean checkInWhiteList(Set<String> whiteList, String uri) {
         if (CollectionUtils.isEmpty(whiteList)) {
+            log.debug("白名单为空");
             return false;
         }
         if (StringUtils.isBlank(uri)) {
+            log.debug("URI为空");
             return false;
         }
         for (String pattern : whiteList) {
-            if (antPathMatcher.match(pattern, uri)) {
+            boolean matched = antPathMatcher.match(pattern, uri);
+            if (matched) {
+                log.debug("URI匹配白名单模式 - uri: {}, pattern: {}", uri, pattern);
                 return true;
             }
         }
+        log.debug("URI不在白名单中 - uri: {}", uri);
         return false;
     }
 }

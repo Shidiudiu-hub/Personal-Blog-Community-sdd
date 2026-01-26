@@ -8,6 +8,7 @@
             <div class="author-info" @click="goUserProfile(article.authorUserId)">
               <el-avatar :size="32" :src="article.authorAvatar">{{ article.authorName?.charAt(0) }}</el-avatar>
               <span class="author">{{ article.authorName }}</span>
+              <el-tag v-if="article.authorRole === 1" size="small" type="warning" style="margin-left: 6px">管理员</el-tag>
             </div>
             <span class="time">{{ formatTime(article.createTime) }}</span>
             <span class="counts">

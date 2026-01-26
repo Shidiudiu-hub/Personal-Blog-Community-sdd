@@ -76,7 +76,7 @@ public class ArticleController {
             return R.createByNeedLogin();
         }
         PageResult<Article> result = articleService.myList(userId, param);
-        log.info("myList 返回结果 - total: {}, listSize: {}", result.getTotal(), result.getList() != null ? result.getList().size() : 0);
+        log.info("myList 返回结果: {}", result);
         return R.createBySuccess(result);
     }
 
@@ -91,7 +91,7 @@ public class ArticleController {
         log.info("list 接口调用 - categoryId: {}, tagId: {}, keyword: {}, orderBy: {}, page: {}, size: {}", 
                 categoryId, tagId, keyword, orderBy, param.getPage(), param.getSize());
         PageResult<ArticleListItemVO> result = articleService.list(categoryId, tagId, keyword, orderBy, param);
-        log.info("list 返回结果 - total: {}, listSize: {}", result.getTotal(), result.getList() != null ? result.getList().size() : 0);
+        log.info("list 返回结果: {}", result);
         return R.createBySuccess(result);
     }
 

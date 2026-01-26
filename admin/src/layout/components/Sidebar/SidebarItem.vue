@@ -1,5 +1,5 @@
 <template>
-  <template v-if="!item.hidden">
+  <template v-if="!item.hidden && hasPermission">
     <template
       v-if="
         hasOneShowingChild(item.children, item) &&
@@ -7,7 +7,7 @@
         !item.alwaysShow
       "
     >
-      <AppLink v-if="onlyOneChild.meta" :to="resolvePath(onlyOneChild.path)">
+      <AppLink v-if="onlyOneChild.meta && checkChildPermission(onlyOneChild)" :to="resolvePath(onlyOneChild.path)">
         <el-menu-item :index="resolvePath(onlyOneChild.path)">
           <Item v-if="onlyOneChild.meta.icon || item.meta" :icon="onlyOneChild.meta.icon || item.meta.icon" />
           <template #title>{{ onlyOneChild.meta?.title }}</template>
@@ -35,7 +35,9 @@ import path from 'path-browserify'
 import { isExternal } from '@/utils/validate'
 import AppLink from './Link'
 import Item from './Item'
-import { reactive, toRefs } from 'vue'
+import { reactive, toRefs, computed } from 'vue'
+import { useUserStore } from '@/store/user'
+
 const props = defineProps({
   // 每一个router Item
   item: {
@@ -49,21 +51,53 @@ const props = defineProps({
   }
 })
 
+const userStore = useUserStore()
+
+// 检查是否有权限访问该路由
+const hasPermission = computed(() => {
+  const item = props.item
+  if (!item.meta || !item.meta.roles || item.meta.roles.length === 0) {
+    return true // 没有角色限制，允许访问
+  }
+  
+  if (!userStore.userInfo) {
+    return false // 未登录，拒绝访问
+  }
+  
+  const userRole = userStore.userInfo.role
+  return item.meta.roles.includes(userRole)
+})
+
 const state = reactive({
   onlyOneChild: null
 })
 
 const { onlyOneChild } = toRefs(state)
 
+// 检查子路由是否有权限
+const checkChildPermission = (child) => {
+  if (!child.meta || !child.meta.roles || child.meta.roles.length === 0) {
+    return true
+  }
+  if (!userStore.userInfo) {
+    return false
+  }
+  const userRole = userStore.userInfo.role
+  return child.meta.roles.includes(userRole)
+}
+
 const hasOneShowingChild = (children = [], parent) => {
   const showingChildren = children.filter(item => {
     if (item.hidden) {
       return false
-    } else {
-      // Temp set(will be used if only has one showing child)
-      state.onlyOneChild = item
-      return true
     }
+    // 检查权限
+    if (!checkChildPermission(item)) {
+      return false
+    }
+    // Temp set(will be used if only has one showing child)
+    state.onlyOneChild = item
+    return true
   })
 
   // When there is only one child router, the child router is displayed by default

@@ -39,6 +39,9 @@ public class ArticleDetailVO {
     @ApiModelProperty("作者头像")
     private String authorAvatar;
 
+    @ApiModelProperty("作者角色：0-普通用户，1-管理员")
+    private Integer authorRole;
+
     @ApiModelProperty("分类ID")
     private Long categoryId;
 

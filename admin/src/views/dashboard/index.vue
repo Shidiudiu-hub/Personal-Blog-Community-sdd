@@ -64,6 +64,7 @@
                 <span class="author">
                   <el-avatar :size="20" :src="item.authorAvatar">{{ item.authorName?.charAt(0) }}</el-avatar>
                   {{ item.authorName }}
+                  <el-tag v-if="item.authorRole === 1" size="small" type="warning" style="margin-left: 6px">管理员</el-tag>
                 </span>
                 <span class="time">{{ formatTime(item.createTime) }}</span>
                 <span class="counts">
