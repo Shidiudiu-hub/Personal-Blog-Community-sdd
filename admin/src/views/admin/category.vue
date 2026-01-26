@@ -15,11 +15,62 @@
       <template #header>
         <div class="card-header">
           <span>分类管理</span>
-          <el-button type="primary" @click="handleAdd">新增分类</el-button>
+          <div class="header-actions">
+            <el-switch
+              v-model="dragMode"
+              active-text="拖拽排序"
+              inactive-text="表格模式"
+              style="margin-right: 12px"
+            />
+            <el-button type="primary" @click="handleAdd">新增分类</el-button>
+          </div>
         </div>
       </template>
 
-      <el-table v-loading="loading" :data="list" stripe>
+      <div v-if="dragMode" v-loading="loading" class="drag-wrap">
+        <div class="drag-tip">
+          拖动左侧把手可调整排序，松手后会自动保存（后端会自动挤开其它分类，保证排序不重复）。
+        </div>
+
+        <div class="drag-header">
+          <div class="cell drag">排序</div>
+          <div class="cell id">ID</div>
+          <div class="cell name">分类名称</div>
+          <div class="cell desc">描述</div>
+          <div class="cell count">文章数</div>
+          <div class="cell time">创建时间</div>
+          <div class="cell ops">操作</div>
+        </div>
+
+        <Draggable
+          v-model="list"
+          item-key="categoryId"
+          handle=".drag-handle"
+          :animation="150"
+          ghost-class="drag-ghost"
+          @end="onDragEnd"
+        >
+          <template #item="{ element, index }">
+            <div class="drag-row">
+              <div class="cell drag">
+                <el-icon class="drag-handle"><Rank /></el-icon>
+                <span class="sort-num">{{ index + 1 }}</span>
+              </div>
+              <div class="cell id">{{ element.categoryId }}</div>
+              <div class="cell name">{{ element.name }}</div>
+              <div class="cell desc">{{ element.description || '-' }}</div>
+              <div class="cell count">{{ element.articleCount ?? 0 }}</div>
+              <div class="cell time">{{ element.createTime }}</div>
+              <div class="cell ops">
+                <el-button link type="primary" size="small" @click="handleEdit(element)">编辑</el-button>
+                <el-button link type="danger" size="small" @click="handleDelete(element)">删除</el-button>
+              </div>
+            </div>
+          </template>
+        </Draggable>
+      </div>
+
+      <el-table v-else v-loading="loading" :data="list" stripe>
         <el-table-column prop="categoryId" label="ID" width="80" />
         <el-table-column prop="name" label="分类名称" min-width="150" />
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
@@ -75,6 +126,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Rank } from '@element-plus/icons-vue'
+import Draggable from 'vuedraggable'
 import { useUserStore } from '@/store/user'
 import CategoryApi from '@/api/CategoryApi'
 
@@ -87,6 +140,7 @@ const isAdmin = computed(() => {
 
 const loading = ref(false)
 const list = ref([])
+const dragMode = ref(true)
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增分类')
 const saving = ref(false)
@@ -131,6 +185,27 @@ async function loadList() {
     list.value = []
   } finally {
     loading.value = false
+  }
+}
+
+async function onDragEnd(evt) {
+  const oldIndex = evt?.oldIndex
+  const newIndex = evt?.newIndex
+  if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) return
+
+  // 备份，失败时回滚
+  const prev = list.value.slice()
+  const moved = list.value[newIndex]
+  if (!moved?.categoryId) return
+
+  try {
+    // newIndex 是 0-based，后端使用 1..N
+    await CategoryApi.update({ categoryId: moved.categoryId, sortOrder: newIndex + 1 })
+    ElMessage.success('排序已更新')
+    await loadList()
+  } catch (e) {
+    list.value = prev
+    ElMessage.error(e?.message || '排序更新失败')
   }
 }
 
@@ -203,5 +278,76 @@ onMounted(loadList)
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.drag-wrap {
+  width: 100%;
+}
+.drag-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 10px;
+}
+.drag-header,
+.drag-row {
+  display: grid;
+  grid-template-columns: 110px 80px 180px 1fr 90px 180px 140px;
+  gap: 10px;
+  align-items: center;
+}
+.drag-header {
+  font-size: 12px;
+  color: #909399;
+  padding: 10px 12px;
+  background: #fafafa;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.drag-row {
+  padding: 10px 12px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: #fff;
+}
+.drag-row:hover {
+  background: #fcfcfc;
+}
+.cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cell.desc {
+  white-space: nowrap;
+}
+.cell.ops {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.cell.drag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drag-handle {
+  cursor: grab;
+  color: #606266;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.sort-num {
+  font-variant-numeric: tabular-nums;
+  color: #303133;
+}
+.drag-ghost {
+  opacity: 0.6;
 }
 </style>
