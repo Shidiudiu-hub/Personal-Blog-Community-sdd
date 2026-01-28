@@ -1,0 +1,74 @@
+#ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${serviceName}
+  namespace: ${namespace}
+spec:
+  rules:
+    - host: ${host}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ${serviceName}
+                port:
+                  number: 8888
+---
+#service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${serviceName}
+  namespace: ${namespace}
+spec:
+  minReadySeconds: 30
+  selector:
+    matchLabels:
+      app: ${serviceName}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ${serviceName}
+    spec:
+      containers:
+        - name: ${serviceName}
+          image: registry.cn-zhangjiakou.aliyuncs.com/guanweiming/java:${CI_PIPELINE_ID}
+          env:
+            - name: PROFILES
+              value: ${profile}
+          readinessProbe:
+            tcpSocket:
+              port: 8888
+            initialDelaySeconds: 20
+            periodSeconds: 10 # 每隔几秒来运行这个
+            successThreshold: 1 # 成功阈值，连续几次才算成功
+            failureThreshold: 3 # 失败阈值，连续几次才算失败
+          livenessProbe:
+            tcpSocket:
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 10 # 每隔几秒来运行这个
+            successThreshold: 1 # 成功阈值，连续几次才算成功
+            failureThreshold: 3 # 失败阈值，连续几次才算失败
+      imagePullSecrets:
+        - name: ali-dockerregsecret
+---
+#service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${serviceName}
+  namespace: ${namespace}
+  annotations:
+    "nginx.ingress.kubernetes.io/proxy-body-size": "300m"
+spec:
+  selector:
+    app: ${serviceName}
+  ports:
+    - port: 8888
+      protocol: TCP
+      targetPort: 8888

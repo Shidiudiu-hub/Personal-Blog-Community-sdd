@@ -1,0 +1,60 @@
+#ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${serviceName}
+  namespace: ${namespace}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "20g"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600" # 设置读取超时为600秒
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600" # 设置发送超时为600秒
+spec:
+  rules:
+    - host: ${host}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ${serviceName}
+                port:
+                  number: 80
+---
+#service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${serviceName}
+  namespace: ${namespace}
+spec:
+  selector:
+    app: ${serviceName}
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${serviceName}
+  namespace: ${namespace}
+spec:
+  selector:
+    matchLabels:
+      app: ${serviceName}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ${serviceName}
+    spec:
+      containers:
+        - name: ${serviceName}
+          image: registry.cn-zhangjiakou.aliyuncs.com/guanweiming/www:${CI_PIPELINE_ID}
+          ports:
+            - containerPort: 80
+      imagePullSecrets:
+        - name: ali-dockerregsecret

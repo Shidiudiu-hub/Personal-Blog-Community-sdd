@@ -1,0 +1,57 @@
+stages:
+  - build
+  - build_front
+  - deploy
+
+
+front-build:
+  image: zziaguan/node:ubuntu-20
+  tags:
+    - build
+  stage: build_front
+  script:
+    - echo '编译前端'
+    - cd admin
+    - yarn install
+    - yarn build:prod
+    # 直接构建和推送，云上会自动认证
+#    - echo ${docker_password} | docker login registry.cn-zhangjiakou.aliyuncs.com -u ${docker_username} --password-stdin
+    - docker build -t registry.cn-zhangjiakou.aliyuncs.com/guanweiming/www:${CI_PIPELINE_ID} .
+    - docker push registry.cn-zhangjiakou.aliyuncs.com/guanweiming/www:${CI_PIPELINE_ID}
+
+
+java2222-build:
+  image: zziaguan/maven:openjdk-11
+  tags:
+    - build
+  stage: build
+  script:
+    - echo '编译后端'
+    - mvn clean package -Dskiptests -U
+    - ls target
+    - docker build -t registry.cn-zhangjiakou.aliyuncs.com/guanweiming/java:${CI_PIPELINE_ID} .
+    # 直接构建和推送，云上会自动认证
+#    - echo ${docker_password} | docker login registry.cn-zhangjiakou.aliyuncs.com -u ${docker_username} --password-stdin
+    - docker push registry.cn-zhangjiakou.aliyuncs.com/guanweiming/java:${CI_PIPELINE_ID}
+
+
+
+soft-deploy:
+  image: zziaguan/tools:22.05
+  tags:
+    - dev
+  stage: deploy
+  script:
+    - echo '开始部署服务端项目'
+    - kubectl get namespaces
+#    - export serviceName=sdd-blog-api
+#    - export namespace=sdd-dev
+#    - export profile=local
+#    - export host=blog-api.dev.guanweiming.com
+#    - envsubst < deploy/dev.yml | kubectl  apply -f -
+#    - envsubst < deploy/redis.yml | kubectl apply -f -
+#    - echo '开始部署前端项目'
+#    - export serviceName=blog-admin
+#    - export host=blog-admin.dev.guanweiming.com
+#    - envsubst < deploy/web.yml | kubectl apply -f -
+#    - echo '全部都部署完毕'
