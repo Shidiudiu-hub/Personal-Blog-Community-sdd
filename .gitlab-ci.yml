@@ -16,8 +16,10 @@ front-build:
     - yarn build:prod
     # 直接构建和推送，云上会自动认证
 #    - echo ${docker_password} | docker login registry.cn-zhangjiakou.aliyuncs.com -u ${docker_username} --password-stdin
-    - docker build -t registry.cn-zhangjiakou.aliyuncs.com/guanweiming/www:${CI_PIPELINE_ID} .
-    - docker push registry.cn-zhangjiakou.aliyuncs.com/guanweiming/www:${CI_PIPELINE_ID}
+    - docker build -t registry.cn-zhangjiakou.aliyuncs.com/sym-group/www:${CI_PIPELINE_ID} .
+    - docker push registry.cn-zhangjiakou.aliyuncs.com/sym-group/www:${CI_PIPELINE_ID}
+#    - docker build -t registry.cn-zhangjiakou.aliyuncs.com/guanweiming/www:${CI_PIPELINE_ID} .
+#    - docker push registry.cn-zhangjiakou.aliyuncs.com/guanweiming/www:${CI_PIPELINE_ID}
 
 
 java2222-build:
@@ -29,10 +31,12 @@ java2222-build:
     - echo '编译后端'
     - mvn clean package -Dskiptests -U
     - ls target
-    - docker build -t registry.cn-zhangjiakou.aliyuncs.com/guanweiming/java:${CI_PIPELINE_ID} .
+    - docker build -t registry.cn-zhangjiakou.aliyuncs.com/sym-group/java:${CI_PIPELINE_ID} .
+#    - docker build -t registry.cn-zhangjiakou.aliyuncs.com/guanweiming/java:${CI_PIPELINE_ID} .
     # 直接构建和推送，云上会自动认证
 #    - echo ${docker_password} | docker login registry.cn-zhangjiakou.aliyuncs.com -u ${docker_username} --password-stdin
-    - docker push registry.cn-zhangjiakou.aliyuncs.com/guanweiming/java:${CI_PIPELINE_ID}
+    - docker push registry.cn-zhangjiakou.aliyuncs.com/sym-group/java:${CI_PIPELINE_ID}
+#    - docker push registry.cn-zhangjiakou.aliyuncs.com/guanweiming/java:${CI_PIPELINE_ID}
 
 
 
