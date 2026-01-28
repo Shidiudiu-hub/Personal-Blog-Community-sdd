@@ -43,15 +43,15 @@ soft-deploy:
   stage: deploy
   script:
     - echo '开始部署服务端项目'
-    - kubectl get namespaces
-#    - export serviceName=sdd-blog-api
-#    - export namespace=sdd-dev
-#    - export profile=local
-#    - export host=sdd-blog-api.dev.guanweiming.com
-#    - envsubst < deploy/dev.yml | kubectl  apply -f -
-#    - envsubst < deploy/redis.yml | kubectl apply -f -
-#    - echo '开始部署前端项目'
-#    - export serviceName=blog-admin
-#    - export host=sdd-blog-admin.dev.guanweiming.com
-#    - envsubst < deploy/web.yml | kubectl apply -f -
-#    - echo '全部都部署完毕'
+#    - kubectl get namespaces
+    - export serviceName=sdd-blog-api
+    - export namespace=guanweiming-dev
+    - export profile=local
+    - export host=sdd-blog-api.dev.guanweiming.com
+    - envsubst < deploy/dev.yml | kubectl  apply -f -
+    - envsubst < deploy/redis.yml | kubectl apply -f -
+    - echo '开始部署前端项目'
+    - export serviceName=blog-admin
+    - export host=sdd-blog-admin.dev.guanweiming.com
+    - envsubst < deploy/web.yml | kubectl apply -f -
+    - echo '全部都部署完毕'
